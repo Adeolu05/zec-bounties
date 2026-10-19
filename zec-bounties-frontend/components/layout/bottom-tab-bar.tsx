@@ -4,12 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, PlusCircle, Ban, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  TASK_CREATION_BLOCKED_COPY,
+  type TaskCreationBlockReason,
+} from "@/hooks/use-task-creation-blocked";
 
 interface BottomTabBarProps {
   onNewBounty: () => void;
   onOpenTeams?: () => void;
   teamsActive?: boolean;
-  newBountyBlocked?: boolean;
+  newBountyBlockedReason?: TaskCreationBlockReason | null;
 }
 
 const SIDE_TABS = [
@@ -21,11 +25,12 @@ export function BottomTabBar({
   onNewBounty,
   onOpenTeams,
   teamsActive,
-  newBountyBlocked,
+  newBountyBlockedReason,
 }: BottomTabBarProps) {
   const pathname = usePathname();
   const isHome = pathname === "/home";
   const isProfile = pathname === "/profile";
+  const newBountyBlocked = newBountyBlockedReason != null;
 
   return (
     <nav
@@ -65,15 +70,15 @@ export function BottomTabBar({
             disabled={isProfile}
             aria-disabled={isProfile}
             aria-label={
-              newBountyBlocked
-                ? "New bounty (disabled for your account)"
+              newBountyBlockedReason
+                ? TASK_CREATION_BLOCKED_COPY[newBountyBlockedReason].label
                 : "New bounty"
             }
             title={
               isProfile
                 ? "Not available on Profile"
-                : newBountyBlocked
-                  ? "An admin has disabled task creation for your account"
+                : newBountyBlockedReason
+                  ? TASK_CREATION_BLOCKED_COPY[newBountyBlockedReason].title
                   : "New bounty"
             }
             className={cn(

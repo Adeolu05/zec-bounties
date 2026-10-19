@@ -13,7 +13,10 @@ import {
   Trophy,
 } from "lucide-react";
 import { useBounty } from "@/lib/bounty-context";
-import { useTaskCreationBlocked } from "@/hooks/use-task-creation-blocked";
+import {
+  TASK_CREATION_BLOCKED_COPY,
+  useTaskCreationBlockReason,
+} from "@/hooks/use-task-creation-blocked";
 
 interface Slide {
   id: string;
@@ -32,7 +35,8 @@ interface Slide {
 const AUTOPLAY_INTERVAL = 6000;
 
 export function HeroCarousel({ onNewBounty }: { onNewBounty: () => void }) {
-  const taskCreationBlocked = useTaskCreationBlocked();
+  const taskCreationBlockReason = useTaskCreationBlockReason();
+  const taskCreationBlocked = taskCreationBlockReason !== null;
   const router = useRouter();
   // const { currentUser } = useBounty();
   const [active, setActive] = useState(0);
@@ -159,7 +163,7 @@ export function HeroCarousel({ onNewBounty }: { onNewBounty: () => void }) {
                     onClick={() => handleCtaClick(slide)}
                     title={
                       slide.cta.onClick && taskCreationBlocked
-                        ? "An admin has disabled task creation for your account"
+                        ? TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].title
                         : undefined
                     }
                     className={`rounded-full shadow-lg shadow-primary/20 ${

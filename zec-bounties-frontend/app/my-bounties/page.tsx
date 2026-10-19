@@ -24,7 +24,10 @@ import { BountyDetailModal } from "@/components/bounty-detail-modal";
 import { useState, useMemo } from "react";
 import { Bounty } from "@/lib/types";
 import type { BountyStatus } from "@/lib/types";
-import { useTaskCreationBlocked } from "@/hooks/use-task-creation-blocked";
+import {
+  TASK_CREATION_BLOCKED_COPY,
+  useTaskCreationBlockReason,
+} from "@/hooks/use-task-creation-blocked";
 
 const STATUS_COLUMNS: {
   status: BountyStatus;
@@ -82,7 +85,8 @@ const MONTH_LABELS = [
 type ViewMode = "bounties" | "earnings";
 
 export default function MyBountiesPage() {
-  const taskCreationBlocked = useTaskCreationBlocked();
+  const taskCreationBlockReason = useTaskCreationBlockReason();
+  const taskCreationBlocked = taskCreationBlockReason !== null;
   const { myBounties, myBountiesLoading, fetchMyBounties, currentUser } =
     useBounty();
   const [selectedBountyId, setSelectedBountyId] = useState<string | null>(null);
@@ -173,7 +177,7 @@ export default function MyBountiesPage() {
   const handleNewBounty = () => {
     if (taskCreationBlocked) {
       toast.error("Task creation disabled", {
-        description: "An admin has blocked your account from creating tasks.",
+        description: TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].description,
       });
       return;
     }
@@ -229,7 +233,7 @@ export default function MyBountiesPage() {
             <Button
               title={
                 taskCreationBlocked
-                  ? "An admin has disabled task creation for your account"
+                  ? TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].title
                   : undefined
               }
               className={`hidden imd:flex gap-2 rounded-full shadow-lg shadow-primary/20 shrink-0 ${

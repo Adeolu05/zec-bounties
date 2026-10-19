@@ -13,7 +13,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useTaskCreationBlocked } from "@/hooks/use-task-creation-blocked";
+import {
+  TASK_CREATION_BLOCKED_COPY,
+  useTaskCreationBlockReason,
+} from "@/hooks/use-task-creation-blocked";
 
 interface MobileNavShellProps {
   children: React.ReactNode;
@@ -31,12 +34,13 @@ export function MobileNavShell({
   const pathname = usePathname();
   const [isNewBountyModalOpen, setIsNewBountyModalOpen] = useState(false);
   const [isTeamsSheetOpen, setIsTeamsSheetOpen] = useState(false);
-  const taskCreationBlocked = useTaskCreationBlocked();
+  const taskCreationBlockReason = useTaskCreationBlockReason();
+  const taskCreationBlocked = taskCreationBlockReason !== null;
 
   const handleNewBounty = () => {
     if (taskCreationBlocked) {
       toast.error("Task creation disabled", {
-        description: "An admin has blocked your account from creating tasks.",
+        description: TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].description,
       });
       return;
     }
@@ -94,7 +98,7 @@ export function MobileNavShell({
 
       <BottomTabBar
         onNewBounty={handleNewBounty}
-        newBountyBlocked={taskCreationBlocked}
+        newBountyBlockedReason={taskCreationBlockReason}
         onOpenTeams={handleOpenTeams}
         teamsActive={isTeamsActive}
       />

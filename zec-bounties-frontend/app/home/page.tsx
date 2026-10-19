@@ -31,7 +31,10 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { FavoriteTeamsSidebar } from "@/components/favorite-teams-sidebar";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { MobileNavShell } from "@/components/layout/mobile-nav-shell";
-import { useTaskCreationBlocked } from "@/hooks/use-task-creation-blocked";
+import {
+  TASK_CREATION_BLOCKED_COPY,
+  useTaskCreationBlockReason,
+} from "@/hooks/use-task-creation-blocked";
 // import { useRoleGuard } from "@/hooks/use-role-guard";
 
 const KANBAN_COLUMNS: {
@@ -94,7 +97,8 @@ const STATUS_ORDER: BountyStatus[] = [
 ];
 
 function HomeContent() {
-  const taskCreationBlocked = useTaskCreationBlocked();
+  const taskCreationBlockReason = useTaskCreationBlockReason();
+  const taskCreationBlocked = taskCreationBlockReason !== null;
   const {
     bounties,
     currentUser,
@@ -245,7 +249,7 @@ function HomeContent() {
   const handleNewBounty = () => {
     if (taskCreationBlocked) {
       toast.error("Task creation disabled", {
-        description: "An admin has blocked your account from creating tasks.",
+        description: TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].description,
       });
       return;
     }
@@ -345,7 +349,7 @@ function HomeContent() {
             <Button
               title={
                 taskCreationBlocked
-                  ? "An admin has disabled task creation for your account"
+                  ? TASK_CREATION_BLOCKED_COPY[taskCreationBlockReason].title
                   : undefined
               }
               className={`w-full sm:w-auto rounded-full shadow-lg shadow-primary/20 ${
