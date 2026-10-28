@@ -112,10 +112,15 @@ async function syncWalletToMembers(teamId, wallet, userIds) {
   // balance, top-up address and payouts all read it. Any team owner can add
   // an admin to their team, so joining must not swap that default for the
   // team's wallet. Admins keep their default and get a non-default copy.
+  // isRobin users count too: they can switch to another role and back, and
+  // the admin dashboard and set-default already treat them as privileged.
   const platformAdmins = new Set(
     (
       await prisma.user.findMany({
-        where: { id: { in: userIds }, role: "ADMIN" },
+        where: {
+          id: { in: userIds },
+          OR: [{ role: "ADMIN" }, { isRobin: true }],
+        },
         select: { id: true },
       })
     ).map((u) => u.id),

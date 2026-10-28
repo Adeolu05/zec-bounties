@@ -14,13 +14,15 @@ const anything = new Proxy(function () {}, {
 // team-1 has a wallet ("Team"). The platform admin and a TEAM user each have
 // a personal default wallet.
 function createDb() {
-  const roles = { owner: "TEAM", admin: "ADMIN", teamUser: "TEAM", fresh: "TEAM" };
+  const roles = { owner: "TEAM", admin: "ADMIN", teamUser: "TEAM", fresh: "TEAM", robin: "TEAM" };
+  const robins = new Set(["robin"]);
   const members = [{ teamId: "team-1", userId: "owner", role: "OWNER" }];
   let nextId = 10;
   const wallets = [
     { id: 1, ownerId: "owner", accountName: "Team", teamId: "team-1", walletId: "team-wallet", isDefault: true },
     { id: 2, ownerId: "admin", accountName: "Main", teamId: null, walletId: "platform", isDefault: true },
     { id: 3, ownerId: "teamUser", accountName: "Main", teamId: null, walletId: "personal", isDefault: true },
+    { id: 4, ownerId: "robin", accountName: "Main", teamId: null, walletId: "robin-personal", isDefault: true },
   ];
   const matches = (row, where) =>
     Object.entries(where).every(([key, value]) =>
@@ -60,10 +62,14 @@ function createDb() {
       },
     },
     user: {
-      findMany: async ({ where }) =>
-        where.id.in
-          .filter((id) => id in roles && (!where.role || roles[id] === where.role))
-          .map((id) => ({ id, role: roles[id] })),
+      findMany: async ({ where }) => {
+        const user = (id) => ({ id, role: roles[id], isRobin: robins.has(id) });
+        const fits = (u, cond) => Object.entries(cond).every(([k, v]) => u[k] === v);
+        return where.id.in
+          .filter((id) => id in roles)
+          .map(user)
+          .filter((u) => (!where.role || u.role === where.role) && (!where.OR || where.OR.some((c) => fits(u, c))));
+      },
     },
     teamWallet: {
       findUnique: async () => ({ teamId: "team-1", accountName: "Team", chain: "mainnet", serverUrl: "https://zec.rocks:443" }),
@@ -140,4 +146,14 @@ test("a new member with no wallet gets the team wallet as default", async () => 
   const db = createDb();
   await loadTeams(db)(["fresh"]);
   assert.deepEqual(defaultOf(db, "fresh"), ["team-wallet"]);
+});
+
+test("an isRobin user in a switched role keeps their personal default when added to a team", async () => {
+  const db = createDb();
+  const res = await loadTeams(db)(["robin"]);
+  assert.equal(res.statusCode, 201);
+  assert.deepEqual(defaultOf(db, "robin"), ["robin-personal"]);
+  const copy = db.wallets.find((w) => w.ownerId === "robin" && w.teamId === "team-1");
+  assert.ok(copy, "the isRobin user still gets a copy of the team wallet");
+  assert.equal(copy.isDefault, false);
 });
